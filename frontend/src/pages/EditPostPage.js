@@ -1,5 +1,5 @@
 // frontend/src/pages/EditPostPage.js
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import API from '../api/axios';
@@ -20,12 +20,7 @@ const EditPostPage = () => {
   const [success, setSuccess] = useState('');
   const [imagePreview, setImagePreview] = useState('');
 
-  // Fetch post data on component mount
-  useEffect(() => {
-    fetchPost();
-  }, [id]);
-
-  const fetchPost = async () => {
+  const fetchPost = useCallback(async () => {
     try {
       setLoading(true);
       const { data } = await API.get(`/posts/${id}`);
@@ -42,7 +37,12 @@ const EditPostPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
+
+  // Fetch post data on component mount
+  useEffect(() => {
+    fetchPost();
+  }, [id, fetchPost]);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];

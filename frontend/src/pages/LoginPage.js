@@ -36,7 +36,7 @@ const LoginPage = () => {
     }
     
     try {
-      const user = await login(email, password);
+      await login(email, password);
       // Redirect to home page after successful login
       navigate('/home');
     } catch (err) {

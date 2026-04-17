@@ -1,5 +1,5 @@
 // frontend/src/pages/PostPage.js
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import API from '../api/axios';
@@ -33,13 +33,7 @@ const PostPage = () => {
     { emoji: '😡', name: 'angry', label: 'Angry' }
   ];
 
-  useEffect(() => {
-    fetchPost();
-    fetchComments();
-    fetchReactions();
-  }, [id]);
-
-  const fetchPost = async () => {
+  const fetchPost = useCallback(async () => {
     try {
       setLoading(true);
       const { data } = await API.get(`/posts/${id}`);
@@ -50,25 +44,31 @@ const PostPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
-  const fetchComments = async () => {
+  const fetchComments = useCallback(async () => {
     try {
       const { data } = await API.get(`/comments/${id}`);
       setComments(data);
     } catch (err) {
       console.error('Error fetching comments:', err);
     }
-  };
+  }, [id]);
 
-  const fetchReactions = async () => {
+  const fetchReactions = useCallback(async () => {
     try {
       const { data } = await API.get(`/posts/${id}/reactions`);
       setReactions(data);
     } catch (err) {
       console.error('Error fetching reactions:', err);
     }
-  };
+  }, [id]);
+
+  useEffect(() => {
+    fetchPost();
+    fetchComments();
+    fetchReactions();
+  }, [id, fetchPost, fetchComments, fetchReactions]);
 
   const handleReaction = async (reactionType) => {
     if (!user) {
