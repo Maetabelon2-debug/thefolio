@@ -1,5 +1,5 @@
 // frontend/src/pages/HomePage.js
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import API from '../api/axios';
@@ -35,11 +35,25 @@ const HomePage = () => {
     { emoji: '😡', name: 'angry', label: 'Angry' }
   ];
 
-  useEffect(() => {
-    fetchPosts();
+  const fetchReactions = useCallback(async (postId) => {
+    try {
+      const { data } = await API.get(`/posts/${postId}/reactions`).catch(() => ({ data: {} }));
+      setReactions(prev => ({ ...prev, [postId]: data }));
+    } catch (err) {
+      console.error('Error fetching reactions:', err);
+    }
   }, []);
 
-  const fetchPosts = async () => {
+  const fetchComments = useCallback(async (postId) => {
+    try {
+      const { data } = await API.get(`/comments/${postId}`);
+      setComments(prev => ({ ...prev, [postId]: data }));
+    } catch (err) {
+      console.error('Error fetching comments:', err);
+    }
+  }, []);
+
+  const fetchPosts = useCallback(async () => {
     try {
       const { data } = await API.get('/posts');
       setPosts(data);
@@ -52,25 +66,11 @@ const HomePage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [fetchComments, fetchReactions]);
 
-  const fetchReactions = async (postId) => {
-    try {
-      const { data } = await API.get(`/posts/${postId}/reactions`).catch(() => ({ data: {} }));
-      setReactions(prev => ({ ...prev, [postId]: data }));
-    } catch (err) {
-      console.error('Error fetching reactions:', err);
-    }
-  };
-
-  const fetchComments = async (postId) => {
-    try {
-      const { data } = await API.get(`/comments/${postId}`);
-      setComments(prev => ({ ...prev, [postId]: data }));
-    } catch (err) {
-      console.error('Error fetching comments:', err);
-    }
-  };
+  useEffect(() => {
+    fetchPosts();
+  }, [fetchPosts]);
 
   const handleReaction = async (postId, reactionType) => {
     if (!user) {
@@ -100,7 +100,7 @@ const HomePage = () => {
     }
 
     try {
-      const { data } = await API.post(`/comments/${postId}`, { 
+      await API.post(`/comments/${postId}`, { 
         body: commentContent,
         parentComment: parentCommentId 
       });
